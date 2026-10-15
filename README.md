@@ -1,70 +1,74 @@
-# 🎵 Music Recommender Simulation
+# VibeFinder: Music Recommender Simulation
 
 ## Project Summary
 
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
-
----
+VibeFinder is a CLI-first Python recommender. It compares 18 songs with a user's preferred genre, mood, and energy, then returns five recommendations with explanations. It uses fixed rules rather than a trained machine-learning model.
 
 ## How The System Works
 
-Explain your design in plain language.
+Collaborative filtering uses patterns in other users' behavior, such as listening histories, likes, skips, and playlists. Content-based filtering compares song attributes with a user's preferences. This project uses content-based filtering without listening histories or comparisons between users.
 
-Some prompts to answer:
+Background sources:
+- https://support.google.com/youtube/answer/16089387?hl=en
+- https://research.google/pubs/content-based-related-video-recommendations/
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+### Features and profiles
 
-You can include a simple diagram or bullet list if helpful.
+Song stores id, title, artist, genre, mood, energy, tempo_bpm, valence, danceability, and acousticness. The current scoring rule uses genre, mood, and energy.
 
----
+UserProfile stores favorite_genre, favorite_mood, target_energy, and likes_acoustic. Acoustic preference is unused in this version. The CLI uses dictionaries containing genre, mood, and energy.
+
+The catalog contains the original 10 songs plus 8 AI-generated fictional additions. The added values are illustrative rather than measurements of actual recordings.
+
+### Algorithm Recipe
+
+- Add 2 points for a genre match.
+- Add 1 point for a mood match.
+- Add energy similarity: 1 - abs(song_energy - target_energy).
+- Sort every song by total score, highest first.
+- Return the top five with explanations.
+
+Sunrise City scores 2 + 1 + 0.98 = 3.98 for the pop/happy/0.8 profile. Closer energy earns more points. Valid energy values range from zero to one, producing total scores from zero to four.
+
+Scoring judges one song; ranking orders all scored songs. sorted() creates a new list, while .sort() changes a list in place and returns None. Exact score ties retain catalog order.
+
+Data flow: CSV and user preferences → score each song → rank songs → top five with reasons.
+
+The larger genre weight may favor familiar genres over better mood matches, creating a filter bubble.
 
 ## Getting Started
 
-### Setup
-
-1. Create a virtual environment (optional but recommended):
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
-
-2. Install dependencies
+Run these commands from the project folder:
 
 ```bash
-pip install -r requirements.txt
-```
-
-3. Run the app:
-
-```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
 python -m src.main
 ```
 
-### Running Tests
+## Testing
 
-Run the starter tests with:
+Run: python -m pytest -q
 
-```bash
-pytest
-```
+Both starter tests passed. They check a preferred song's ranking and a nonempty explanation.
 
-You can add more tests in `tests/test_recommender.py`.
+## Experiments You Tried
 
----
+Genre weight was halved from 2 to 1 and energy weight doubled from 1 to 2. Mood stayed at 1. Rooftop Lights rose from fourth to second for pop. Gym Hero rose from third to second for rock. The lofi ordering stayed unchanged.
+
+These are ranking changes; listener feedback would be needed to establish better accuracy. Baseline code was restored afterward.
+
+Two edge cases tested sad high-energy pop and unavailable opera/dramatic labels. The opera profile received energy-only matches because neither category was present.
+
+## Limitations and Risks
+
+The catalog is small and unevenly distributed. Exact matching treats pop and indie pop as different genres. Genre weight can put sad pop above happy indie pop for a happy-pop profile. Lyrics, language, listening history, and changing taste are ignored. Scores are relevance points rather than probabilities of enjoyment.
+
+## Reflection
+
+See model_card.md for evaluation and personal reflection. The personal reflection is included in the model card.
+
 
 ## Sample Recommendation Output
 
@@ -116,41 +120,85 @@ Preferences: {'genre': 'rock', 'mood': 'intense', 'energy': 0.9}
    Because: energy similarity (+0.96)
 ```
 
+## Weight Experiment Results
 
-## Experiments You Tried
+Genre weight changed from 2 to 1; energy weight changed from 1 to 2. Mood stayed at 1.
 
-Use this section to document the experiments you ran. For example:
+```text
+Loaded songs: 18
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+Profile: High-Energy Pop
+Preferences: {'genre': 'pop', 'mood': 'happy', 'energy': 0.8}
 
----
+1. Sunrise City | Score: 3.96
+   Because: genre match (+1.00); mood match (+1.00); energy similarity (+1.96)
+2. Rooftop Lights | Score: 2.92
+   Because: mood match (+1.00); energy similarity (+1.92)
+3. Neon Heartbreak | Score: 2.88
+   Because: genre match (+1.00); energy similarity (+1.88)
+4. Gym Hero | Score: 2.74
+   Because: genre match (+1.00); energy similarity (+1.74)
+5. Midnight Verse | Score: 1.98
+   Because: energy similarity (+1.98)
 
-## Limitations and Risks
+Profile: Chill Lofi
+Preferences: {'genre': 'lofi', 'mood': 'chill', 'energy': 0.35}
 
-Summarize some limitations of your recommender.
+1. Library Rain | Score: 4.00
+   Because: genre match (+1.00); mood match (+1.00); energy similarity (+2.00)
+2. Midnight Coding | Score: 3.86
+   Because: genre match (+1.00); mood match (+1.00); energy similarity (+1.86)
+3. Focus Flow | Score: 2.90
+   Because: genre match (+1.00); energy similarity (+1.90)
+4. Spacewalk Thoughts | Score: 2.86
+   Because: mood match (+1.00); energy similarity (+1.86)
+5. Coffee Shop Stories | Score: 1.96
+   Because: energy similarity (+1.96)
 
-Examples:
+Profile: Deep Intense Rock
+Preferences: {'genre': 'rock', 'mood': 'intense', 'energy': 0.9}
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
+1. Storm Runner | Score: 3.98
+   Because: genre match (+1.00); mood match (+1.00); energy similarity (+1.98)
+2. Gym Hero | Score: 2.94
+   Because: mood match (+1.00); energy similarity (+1.94)
+3. Electric Grief | Score: 2.92
+   Because: genre match (+1.00); energy similarity (+1.92)
+4. Brass Parade | Score: 1.96
+   Because: energy similarity (+1.96)
+5. Neon Heartbreak | Score: 1.92
+   Because: energy similarity (+1.92)
+```
 
-You will go deeper on this in your model card.
+## Edge Case Results
 
----
+```text
 
-## Reflection
+Profile: Sad High-Energy Pop
+Preferences: {'genre': 'pop', 'mood': 'sad', 'energy': 0.95}
 
-Read and complete `model_card.md`:
+1. Neon Heartbreak | Score: 3.91
+   Because: genre match (+2.00); mood match (+1.00); energy similarity (+0.91)
+2. Gym Hero | Score: 2.98
+   Because: genre match (+2.00); energy similarity (+0.98)
+3. Sunrise City | Score: 2.87
+   Because: genre match (+2.00); energy similarity (+0.87)
+4. Electric Grief | Score: 1.99
+   Because: mood match (+1.00); energy similarity (+0.99)
+5. Storm Runner | Score: 0.96
+   Because: energy similarity (+0.96)
 
-[**Model Card**](model_card.md)
+Profile: Unknown Genre and Mood
+Preferences: {'genre': 'opera', 'mood': 'dramatic', 'energy': 0.5}
 
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-
-
+1. Island Afternoon | Score: 0.98
+   Because: energy similarity (+0.98)
+2. Porchlight Home | Score: 0.95
+   Because: energy similarity (+0.95)
+3. Midnight Coding | Score: 0.92
+   Because: energy similarity (+0.92)
+4. Focus Flow | Score: 0.90
+   Because: energy similarity (+0.90)
+5. Coffee Shop Stories | Score: 0.87
+   Because: energy similarity (+0.87)
+```

@@ -1,111 +1,97 @@
-# 🎧 Model Card: Music Recommender Simulation
+# Model Card: VibeFinder 1.0
 
-## 1. Model Name  
+## 1. Model Name
 
-Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+VibeFinder 1.0.
 
----
+## 2. Intended Use
 
-## 2. Intended Use  
+VibeFinder suggests songs based on a preferred genre, mood, and energy level. Its goal is to demonstrate how song features become scores and ranked recommendations.
 
-Describe what your recommender is designed to do and who it is for. 
+It is designed for classroom exploration. It assumes one genre, one mood, and one energy target describe the user's current preferences.
 
-Prompts:  
+It is not intended for production music recommendations or reliable predictions of listener enjoyment. A score is not a probability.
 
-- What kind of recommendations does it generate  
-- What assumptions does it make about the user  
-- Is this for real users or classroom exploration  
+## 3. How the Model Works
 
----
+A matching genre earns two points. A matching mood earns one point. Energy earns up to one point, with closer matches receiving more points.
 
-## 3. How the Model Works  
+The program scores every song, sorts the scores from highest to lowest, and returns five songs with explanations.
 
-Explain your scoring approach in simple language.  
+The starter placeholders were replaced with CSV loading, scoring, ranking, and explanations. The dictionary functions and Recommender class share the same scoring rule.
 
-Prompts:  
+## 4. Data
 
-- What features of each song are used (genre, energy, mood, etc.)  
-- What user preferences are considered  
-- How does the model turn those into a score  
-- What changes did you make from the starter logic  
+The catalog contains 18 songs: the original 10 and eight AI-generated fictional additions.
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+Each song has an ID, title, artist, genre, mood, energy, tempo, valence, danceability, and acousticness. Only genre, mood, and energy currently affect scores.
 
----
+The additions include country, ska, classical, reggae, afrobeat, and hip hop. Their values are illustrative rather than measured from recordings.
 
-## 4. Data  
+The dataset has no listening histories, user ratings, or ground truth showing which songs a listener actually enjoys.
 
-Describe the dataset the model uses.  
+## 5. Strengths
 
-Prompts:  
+The three main profiles produce different winners. Sunrise City leads High-Energy Pop with 3.98. Library Rain leads Chill Lofi with 4.00. Storm Runner leads Deep Intense Rock with 3.99.
 
-- How many songs are in the catalog  
-- What genres or moods are represented  
-- Did you add or remove data  
-- Are there parts of musical taste missing in the dataset  
+These winners match the profiles' genre and mood and closely match their energy targets. The explanations make each score easy to inspect.
 
----
+This demonstrates consistency with the scoring recipe. It does not establish real-world recommendation accuracy.
 
-## 5. Strengths  
+## 6. Limitations and Bias
 
-Where does your system seem to work well  
+Genre has more weight than mood, so sad Neon Heartbreak outranks happy Rooftop Lights for the happy-pop profile. Exact matching also treats pop and indie pop as unrelated genres. The small, uneven catalog gives some genres more choices than others and can reinforce a filter bubble. Users requesting unavailable labels, such as opera and dramatic, receive energy-only matches. The system ignores lyrics, language, listening history, and changes in a person's taste.
 
-Prompts:  
+## 7. Evaluation
 
-- User types for which it gives reasonable results  
-- Any patterns you think your scoring captures correctly  
-- Cases where the recommendations matched your intuition  
+### Profiles tested
 
----
+- High-Energy Pop: pop, happy, energy 0.80.
+- Chill Lofi: lofi, chill, energy 0.35.
+- Deep Intense Rock: rock, intense, energy 0.90.
+- Sad High-Energy Pop: pop, sad, energy 0.95.
+- Unknown Genre and Mood: opera, dramatic, energy 0.50.
 
-## 6. Limitations and Bias 
+Actual top-five output is saved in README.md under Sample Recommendation Output, Weight Experiment Results, and Edge Case Results.
 
-Where the system struggles or behaves unfairly. 
+### Comparing the three main profiles
 
-Prompts:  
+Pop versus lofi: Sunrise City leads pop, while Library Rain leads lofi. The lofi profile rewards lower energy and chill music rather than happy pop.
 
-- Features it does not consider  
-- Genres or moods that are underrepresented  
-- Cases where the system overfits to one preference  
-- Ways the scoring might unintentionally favor some users  
+Pop versus rock: Storm Runner leads rock because it matches rock and intense with energy close to 0.90. Gym Hero appears in both lists because its genre helps it for pop, while its mood helps it for rock.
 
----
+Lofi versus rock: Their baseline top-five lists have no songs in common. Their preferred genres, moods, and energy levels differ substantially.
 
-## 7. Evaluation  
+### Explaining a winning score
 
-How you checked whether the recommender behaved as expected. 
+Sunrise City earns two points for pop, one for happy, and 0.98 for energy similarity. Its energy is 0.82 against a target of 0.80, producing a total of 3.98.
 
-Prompts:  
+### Weight experiment
 
-- Which user profiles you tested  
-- What you looked for in the recommendations  
-- What surprised you  
-- Any simple tests or comparisons you ran  
+Genre weight was halved from two to one, and energy weight was doubled from one to two. Mood stayed at one.
 
-No need for numeric metrics unless you created some.
+Rooftop Lights rose from fourth to second for pop because its happy mood and close energy became more competitive with exact genre matches. Gym Hero rose from third to second for rock, overtaking Electric Grief. The lofi order stayed unchanged.
 
----
+The experiment changed rankings but did not establish better accuracy. That would require listener feedback. The baseline scoring code was restored afterward.
 
-## 8. Future Work  
+### Edge cases
 
-Ideas for how you would improve the model next.  
+Sad High-Energy Pop ranks Neon Heartbreak first at 3.91. Sadness and high energy can coexist, so these preferences are not inherently contradictory.
 
-Prompts:  
+The opera/dramatic profile ranks Island Afternoon first at 0.98 based only on energy. This exposes a coverage limitation rather than a successful opera recommendation.
 
-- Additional features or preferences  
-- Better ways to explain recommendations  
-- Improving diversity among the top results  
-- Handling more complex user tastes  
+### Tests
 
----
+Both starter tests passed using python -m pytest -q. They check a preferred song's ranking in a small catalog and a nonempty explanation. They do not measure listener satisfaction or comprehensively validate the system.
 
-## 9. Personal Reflection  
+## 8. Future Work
 
-A few sentences about your experience.  
+- Support multiple favorite genres and partial matches between related genres.
+- Expand and balance the catalog, with explicit preferences for tempo or valence.
+- Collect listener ratings to evaluate recommendation quality against ground truth.
 
-Prompts:  
+## 9. Personal Reflection
 
-- What you learned about recommender systems  
-- Something unexpected or interesting you discovered  
-- How this changed the way you think about music recommendation apps  
+The biggest thing I learned was how a few simple rules can turn song data into recommendations. Breaking down Sunrise City's score of 3.98 helped me understand what each feature contributes. Changing the weights also showed me how much the results depend on the choices made when designing the system. For a happy-pop profile, it makes more sense to me for happy indie pop to rank above sad pop, so seeing Rooftop Lights move up during the experiment was useful.
+
+AI helped me build the functions and understand how the pieces connect. I ran the commands in VS Code, checked the scores and explanations, and ran the starter tests instead of assuming everything worked. I also had to separate terminal commands from example output after accidentally pasting output as commands. What surprised me was that fixed rules could produce different lists that felt personalized without learning from anyone's listening history. Next, I would add more songs and let users choose multiple genres so the recommendations would have more variety.
